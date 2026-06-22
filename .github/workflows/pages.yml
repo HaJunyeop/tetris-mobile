@@ -25,6 +25,8 @@ jobs:
         uses: actions/checkout@v4
       - name: Pages 준비
         uses: actions/configure-pages@v5
+        with:
+          enablement: true
       - name: 게임 파일 묶기
         uses: actions/upload-pages-artifact@v3
         with:
