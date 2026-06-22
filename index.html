@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#0a0b14">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>한손 테트리스</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon.svg">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="game-shell">
+    <header>
+      <div>
+        <p class="eyebrow">OFFLINE · NO ADS</p>
+        <h1>한손 테트리스</h1>
+      </div>
+      <button id="pauseButton" class="small-button" type="button">일시정지</button>
+    </header>
+
+    <section class="play-area" aria-label="테트리스 게임">
+      <canvas id="board" width="300" height="600" aria-label="게임 보드"></canvas>
+      <aside>
+        <div class="panel">
+          <span>다음</span>
+          <canvas id="next" width="96" height="96"></canvas>
+        </div>
+        <div class="panel stats">
+          <span>줄</span>
+          <strong id="lines">0</strong>
+        </div>
+        <button id="newButton" class="new-button" type="button">새 게임</button>
+      </aside>
+      <div id="overlay" class="overlay hidden">
+        <strong id="overlayTitle">일시정지</strong>
+        <button id="resumeButton" type="button">계속하기</button>
+      </div>
+    </section>
+
+    <section class="controls" aria-label="터치 조작">
+      <button data-action="left" aria-label="왼쪽 이동">←</button>
+      <button data-action="rotate" aria-label="회전">↻</button>
+      <button data-action="right" aria-label="오른쪽 이동">→</button>
+      <button data-action="down" aria-label="아래로 이동">↓</button>
+      <button data-action="drop" class="drop" aria-label="바로 내리기">내리기</button>
+    </section>
+    <p class="hint">화면을 밀어서 이동 · 탭해서 회전 · 아래로 빠르게 밀어서 내리기</p>
+  </main>
+  <script src="game.js"></script>
+</body>
+</html>
