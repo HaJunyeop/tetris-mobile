@@ -37,10 +37,10 @@ aside { display: flex; flex-direction: column; gap: 10px; }
 .overlay strong { font-size: 28px; }
 .hidden { display: none; }
 
-.controls { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 12px; }
+.controls { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 12px; }
 .controls button { min-height: 58px; border-radius: 16px; background: linear-gradient(#292a3a, #1c1d29); border: 1px solid #38394b; font-size: 25px; box-shadow: inset 0 1px #ffffff12, 0 5px 14px #0005; }
 .controls button:active { transform: translateY(2px); background: #151621; }
-.controls .drop { font-size: 13px; font-weight: 700; background: linear-gradient(#7857e8, #5836bf); }
+.controls button[data-action="down"] { background: linear-gradient(#7857e8, #5836bf); }
 .hint { color: #77768a; text-align: center; font-size: 11px; margin: 10px 0 0; }
 
 @media (max-height: 680px) {
