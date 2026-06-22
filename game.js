@@ -1,5 +1,5 @@
 const COLS = 10;
-const ROWS = 20;
+const ROWS = 24;
 const BLOCK = 30;
 const COLORS = [null, '#29c7ff', '#ffd23f', '#ae6cff', '#53dd8b', '#ff5468', '#4f77ff', '#ff963a'];
 const SHAPES = [
@@ -129,7 +129,7 @@ function update(time) {
 }
 
 document.querySelectorAll('[data-action]').forEach(button => {
-  const action = { left: () => move(-1), right: () => move(1), rotate, down, drop: hardDrop }[button.dataset.action];
+  const action = { left: () => move(-1), right: () => move(1), rotate, down: hardDrop, drop: hardDrop }[button.dataset.action];
   button.addEventListener('pointerdown', event => { event.preventDefault(); action(); });
 });
 pauseButton.addEventListener('click', togglePause);
