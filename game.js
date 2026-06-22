@@ -21,13 +21,20 @@ const overlayTitle = document.querySelector('#overlayTitle');
 const pauseButton = document.querySelector('#pauseButton');
 
 let board, piece, nextPiece, lines, paused, over, lastTime, dropCounter, animationId;
+let animating = false;
+let clearingRows = [];
+let clearProgress = 0;
+let pieceVisible = true;
+let gameToken = 0;
 
 function emptyBoard() { return Array.from({ length: ROWS }, () => Array(COLS).fill(0)); }
 function randomPiece() { return SHAPES[Math.floor(Math.random() * SHAPES.length)].map(row => [...row]); }
 function makePiece(shape) { return { shape, x: Math.floor((COLS - shape[0].length) / 2), y: 0 }; }
 
 function reset() {
+  gameToken++;
   board = emptyBoard(); lines = 0; paused = false; over = false;
+  animating = false; clearingRows = []; clearProgress = 0; pieceVisible = true;
   nextPiece = randomPiece(); spawn();
   linesEl.textContent = '0'; overlay.classList.add('hidden'); pauseButton.textContent = '일시정지';
   lastTime = performance.now(); dropCounter = 0;
@@ -35,7 +42,7 @@ function reset() {
 }
 
 function spawn() {
-  piece = makePiece(nextPiece); nextPiece = randomPiece(); drawNext();
+  piece = makePiece(nextPiece); pieceVisible = true; nextPiece = randomPiece(); drawNext();
   if (collides(piece)) endGame();
 }
 
@@ -53,34 +60,66 @@ function merge() {
   }));
 }
 
-function clearLines() {
-  let cleared = 0;
-  for (let y = ROWS - 1; y >= 0; y--) {
-    if (board[y].every(Boolean)) { board.splice(y, 1); board.unshift(Array(COLS).fill(0)); cleared++; y++; }
+function delay(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
+
+async function animateLineClear(rows, token) {
+  clearingRows = rows;
+  const startedAt = performance.now();
+  const duration = 280;
+  while (clearProgress < 1 && token === gameToken) {
+    clearProgress = Math.min(1, (performance.now() - startedAt) / duration);
+    draw();
+    await new Promise(resolve => requestAnimationFrame(resolve));
   }
-  lines += cleared; linesEl.textContent = String(lines);
+  if (token !== gameToken) return false;
+  [...rows].sort((a, b) => b - a).forEach(y => board.splice(y, 1));
+  rows.forEach(() => board.unshift(Array(COLS).fill(0)));
+  lines += rows.length; linesEl.textContent = String(lines);
+  clearingRows = []; clearProgress = 0;
+  return true;
+}
+
+async function lockPiece() {
+  if (animating || over) return;
+  const token = gameToken;
+  animating = true;
+  merge(); pieceVisible = false;
+  const fullRows = board.map((row, y) => row.every(Boolean) ? y : -1).filter(y => y >= 0);
+  if (fullRows.length && !(await animateLineClear(fullRows, token))) return;
+  if (token !== gameToken) return;
+  spawn(); animating = false; dropCounter = 0; lastTime = performance.now(); draw();
 }
 
 function move(dx) {
-  if (paused || over) return;
+  if (paused || over || animating) return;
   piece.x += dx; if (collides(piece)) piece.x -= dx; draw();
 }
 
 function down() {
-  if (paused || over) return;
+  if (paused || over || animating) return;
   piece.y++;
-  if (collides(piece)) { piece.y--; merge(); clearLines(); spawn(); }
+  if (collides(piece)) { piece.y--; void lockPiece(); }
   dropCounter = 0; draw();
 }
 
-function hardDrop() {
-  if (paused || over) return;
-  while (!collides({ ...piece, y: piece.y + 1 })) piece.y++;
-  down();
+async function hardDrop() {
+  if (paused || over || animating) return;
+  const token = gameToken;
+  let targetY = piece.y;
+  while (!collides({ ...piece, y: targetY + 1 })) targetY++;
+  animating = true;
+  while (piece.y < targetY && token === gameToken) {
+    piece.y++;
+    draw();
+    await delay(18);
+  }
+  if (token !== gameToken) return;
+  animating = false;
+  await lockPiece();
 }
 
 function rotate() {
-  if (paused || over) return;
+  if (paused || over || animating) return;
   const old = piece.shape;
   const rotated = old[0].map((_, i) => old.map(row => row[i]).reverse());
   const oldX = piece.x; piece.shape = rotated;
@@ -94,7 +133,7 @@ function endGame() {
 }
 
 function togglePause() {
-  if (over) return;
+  if (over || animating) return;
   paused = !paused; overlayTitle.textContent = '일시정지';
   document.querySelector('#resumeButton').textContent = '계속하기';
   overlay.classList.toggle('hidden', !paused); pauseButton.textContent = paused ? '계속하기' : '일시정지';
@@ -106,12 +145,27 @@ function drawBlock(context, x, y, color, size = BLOCK) {
   context.fillStyle = '#ffffff28'; context.fillRect(x * size + 3, y * size + 3, size - 6, 4);
 }
 
+function drawClearingBlock(x, y, color) {
+  const shrink = clearProgress < .35 ? 1 : Math.max(0, 1 - (clearProgress - .35) / .65);
+  const width = (BLOCK - 2) * shrink;
+  const left = x * BLOCK + BLOCK / 2 - width / 2;
+  ctx.globalAlpha = 1 - clearProgress * .25;
+  ctx.fillStyle = color; ctx.fillRect(left, y * BLOCK + 1, width, BLOCK - 2);
+  ctx.fillStyle = `rgba(255,255,255,${Math.sin(clearProgress * Math.PI) * .9})`;
+  ctx.fillRect(left, y * BLOCK + 1, width, BLOCK - 2);
+  ctx.globalAlpha = 1;
+}
+
 function draw() {
   ctx.clearRect(0, 0, boardCanvas.width, boardCanvas.height);
   ctx.strokeStyle = '#ffffff0a';
   for (let x = 1; x < COLS; x++) { ctx.beginPath(); ctx.moveTo(x * BLOCK, 0); ctx.lineTo(x * BLOCK, ROWS * BLOCK); ctx.stroke(); }
-  board.forEach((row, y) => row.forEach((v, x) => v && drawBlock(ctx, x, y, COLORS[v])));
-  piece.shape.forEach((row, y) => row.forEach((v, x) => v && drawBlock(ctx, piece.x + x, piece.y + y, COLORS[v])));
+  board.forEach((row, y) => row.forEach((v, x) => {
+    if (!v) return;
+    if (clearingRows.includes(y)) drawClearingBlock(x, y, COLORS[v]);
+    else drawBlock(ctx, x, y, COLORS[v]);
+  }));
+  if (pieceVisible) piece.shape.forEach((row, y) => row.forEach((v, x) => v && drawBlock(ctx, piece.x + x, piece.y + y, COLORS[v])));
 }
 
 function drawNext() {
@@ -122,6 +176,7 @@ function drawNext() {
 
 function update(time) {
   if (paused || over) return;
+  if (animating) { lastTime = time; draw(); animationId = requestAnimationFrame(update); return; }
   dropCounter += time - lastTime; lastTime = time;
   const interval = Math.max(180, 850 - Math.floor(lines / 10) * 80);
   if (dropCounter > interval) down(); else draw();
