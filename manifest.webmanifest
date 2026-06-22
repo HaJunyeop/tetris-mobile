@@ -1,0 +1,12 @@
+{
+  "name": "한손 테트리스",
+  "short_name": "테트리스",
+  "description": "광고와 회원가입 없이 즐기는 오프라인 테트리스",
+  "lang": "ko",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#070810",
+  "theme_color": "#0a0b14",
+  "orientation": "portrait",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}
