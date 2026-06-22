@@ -26,7 +26,7 @@ button { color: inherit; font: inherit; border: 0; cursor: pointer; user-select:
 .small-button, .new-button, #resumeButton { background: #20202d; border: 1px solid #373747; border-radius: 12px; padding: 10px 12px; }
 
 .play-area { position: relative; display: grid; grid-template-columns: minmax(0, 3fr) minmax(82px, 1fr); gap: 10px; }
-#board { width: 100%; height: auto; max-height: 62dvh; background: rgba(10, 11, 20, .92); border: 1px solid #2c2d3b; border-radius: 16px; box-shadow: 0 22px 60px #0008; }
+#board { display: block; width: 100%; height: auto; aspect-ratio: 5 / 12; background: rgba(10, 11, 20, .92); border: 1px solid #2c2d3b; border-radius: 16px; box-shadow: 0 22px 60px #0008; }
 aside { display: flex; flex-direction: column; gap: 10px; }
 .panel { background: #13141fdd; border: 1px solid #292a38; border-radius: 14px; padding: 10px; }
 .panel > span { display: block; color: #9291a7; font-size: 12px; margin-bottom: 6px; }
@@ -46,7 +46,7 @@ aside { display: flex; flex-direction: column; gap: 10px; }
 @media (max-height: 680px) {
   .game-shell { padding-top: 8px; }
   header { margin-bottom: 7px; }
-  #board { max-height: 56dvh; }
+  .game-shell { width: min(100%, 440px); }
   .controls button { min-height: 49px; }
   .hint { display: none; }
 }
