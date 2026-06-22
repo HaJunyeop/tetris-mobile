@@ -1,0 +1,34 @@
+name: GitHub Pages에 테트리스 배포
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: 저장소 가져오기
+        uses: actions/checkout@v4
+      - name: Pages 준비
+        uses: actions/configure-pages@v5
+      - name: 게임 파일 묶기
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+      - name: 공개하기
+        id: deployment
+        uses: actions/deploy-pages@v4
