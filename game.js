@@ -1,5 +1,5 @@
 const COLS = 10;
-const ROWS = 24;
+const ROWS = 20;
 const BLOCK = 30;
 const COLORS = [null, '#29c7ff', '#ffd23f', '#ae6cff', '#53dd8b', '#ff5468', '#4f77ff', '#ff963a'];
 const SHAPES = [
