@@ -63,7 +63,7 @@ function merge() {
 async function animateLineClear(rows, token) {
   clearingRows = rows;
   const startedAt = performance.now();
-  const duration = 280;
+  const duration = 520;
   while (clearProgress < 1 && token === gameToken) {
     clearProgress = Math.min(1, (performance.now() - startedAt) / duration);
     draw();
@@ -150,18 +150,54 @@ function drawBlock(context, x, y, color, size = BLOCK) {
 }
 
 function drawClearingBlock(x, y, color) {
-  const shrink = clearProgress < .35 ? 1 : Math.max(0, 1 - (clearProgress - .35) / .65);
+  const shrink = clearProgress < .42 ? 1 : Math.max(0, 1 - (clearProgress - .42) / .58);
   const width = (BLOCK - 2) * shrink;
   const left = x * BLOCK + BLOCK / 2 - width / 2;
-  ctx.globalAlpha = 1 - clearProgress * .25;
+  ctx.save();
+  ctx.globalAlpha = 1 - clearProgress * .18;
+  ctx.shadowColor = '#ffffff';
+  ctx.shadowBlur = 5 + Math.sin(Math.min(1, clearProgress * 2.4) * Math.PI) * 18;
   ctx.fillStyle = color; ctx.fillRect(left, y * BLOCK + 1, width, BLOCK - 2);
-  ctx.fillStyle = `rgba(255,255,255,${Math.sin(clearProgress * Math.PI) * .9})`;
+  const flash = clearProgress < .5 ? Math.sin(clearProgress * Math.PI * 2) : (1 - clearProgress) * .45;
+  ctx.fillStyle = `rgba(255,255,255,${Math.max(0, flash)})`;
   ctx.fillRect(left, y * BLOCK + 1, width, BLOCK - 2);
-  ctx.globalAlpha = 1;
+  ctx.restore();
+}
+
+function drawLineClearEffects() {
+  if (!clearingRows.length) return;
+  const burst = Math.max(0, (clearProgress - .25) / .75);
+  clearingRows.forEach((row, rowIndex) => {
+    const centerY = row * BLOCK + BLOCK / 2;
+    const beam = Math.sin(Math.min(1, clearProgress / .55) * Math.PI);
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.fillStyle = `rgba(255,255,255,${beam * .72})`;
+    ctx.fillRect(0, centerY - 2 - beam * 5, boardCanvas.width, 4 + beam * 10);
+
+    if (burst > 0) {
+      for (let i = 0; i < 24; i++) {
+        const direction = i % 2 ? 1 : -1;
+        const lane = Math.floor(i / 2) / 11;
+        const distance = (28 + lane * 150) * burst;
+        const px = boardCanvas.width / 2 + direction * distance;
+        const py = centerY + Math.sin(i * 2.17 + rowIndex) * (10 + 30 * burst);
+        const size = Math.max(1, (5 - lane * 2.5) * (1 - burst * .55));
+        ctx.globalAlpha = 1 - burst;
+        ctx.fillStyle = COLORS[(i % 7) + 1];
+        ctx.fillRect(px - size / 2, py - size / 2, size, size);
+      }
+    }
+    ctx.restore();
+  });
 }
 
 function draw() {
   ctx.clearRect(0, 0, boardCanvas.width, boardCanvas.height);
+  const shakeStrength = clearingRows.length && clearProgress < .42 ? (1 - clearProgress / .42) * 4 : 0;
+  const shakeX = Math.sin(clearProgress * 80) * shakeStrength;
+  ctx.save();
+  ctx.translate(shakeX, 0);
   ctx.strokeStyle = '#ffffff0a';
   for (let x = 1; x < COLS; x++) { ctx.beginPath(); ctx.moveTo(x * BLOCK, 0); ctx.lineTo(x * BLOCK, ROWS * BLOCK); ctx.stroke(); }
   board.forEach((row, y) => row.forEach((v, x) => {
@@ -170,6 +206,8 @@ function draw() {
     else drawBlock(ctx, x, y, COLORS[v]);
   }));
   if (pieceVisible) piece.shape.forEach((row, y) => row.forEach((v, x) => v && drawBlock(ctx, piece.x + x, piece.y + y, COLORS[v])));
+  drawLineClearEffects();
+  ctx.restore();
 }
 
 function drawNext() {
