@@ -60,8 +60,6 @@ function merge() {
   }));
 }
 
-function delay(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
-
 async function animateLineClear(rows, token) {
   clearingRows = rows;
   const startedAt = performance.now();
@@ -105,15 +103,21 @@ function down() {
 async function hardDrop() {
   if (paused || over || animating) return;
   const token = gameToken;
+  const startY = piece.y;
   let targetY = piece.y;
   while (!collides({ ...piece, y: targetY + 1 })) targetY++;
   animating = true;
+  const startedAt = performance.now();
+  const duration = 120;
   while (piece.y < targetY && token === gameToken) {
-    piece.y++;
+    const progress = Math.min(1, (performance.now() - startedAt) / duration);
+    piece.y = startY + (targetY - startY) * progress * progress;
     draw();
-    await delay(18);
+    await new Promise(resolve => requestAnimationFrame(resolve));
   }
   if (token !== gameToken) return;
+  piece.y = targetY;
+  draw();
   animating = false;
   await lockPiece();
 }
